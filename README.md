@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Concentration Grids — registro de entrenamiento
 
-## Getting Started
+App para entrenar atención y búsqueda visual con *Concentration Grids* y registrar
+tiempo/errores por sesión. MVP: registro de usuarios + Grid L1 (00 → 99) + historial.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Next.js 16** (App Router) + **TypeScript** + **Tailwind CSS v4**
+- **Supabase** — Postgres + Auth (registro por email con confirmación)
+- **Recharts** — gráficas de progreso
+- Deploy en **Vercel**
+
+## Estructura
+
+```
+src/
+  app/
+    (auth)/login, (auth)/register   # login y registro (server actions)
+    auth/callback                   # confirmación de email
+    auth/signout                    # cerrar sesión
+    train/                          # sesión de grid + guardado
+    history/                        # historial + gráfica
+  components/                       # GridL1, TrainSession, HistoryChart, NavBar
+  lib/
+    grid.ts                         # lógica del grid L1
+    types.ts                        # tipos compartidos
+    supabase/{client,server,middleware}.ts
+  proxy.ts                          # refresco de sesión + protección de rutas
+supabase/schema.sql                 # tablas + RLS
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Configuración
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1. Crear proyecto Supabase
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Crea un proyecto en https://supabase.com
+2. **SQL Editor > New query**: pega y ejecuta `supabase/schema.sql`.
+3. **Authentication > Providers > Email**: deja habilitado "Confirm email"
+   (así el registro exige confirmar el correo antes de iniciar sesión).
+4. **Authentication > URL Configuration**: añade tu URL de sitio y a
+   *Redirect URLs* agrega `http://localhost:3000/auth/callback` y, en producción,
+   `https://TU-APP.vercel.app/auth/callback`.
 
-## Learn More
+### 2. Variables de entorno
 
-To learn more about Next.js, take a look at the following resources:
+Copia el ejemplo y rellena con tus valores (Project Settings > API):
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+cp .env.local.example .env.local
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+NEXT_PUBLIC_SUPABASE_URL=https://TU-PROYECTO.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=TU_ANON_KEY
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
 
-## Deploy on Vercel
+### 3. Desarrollo local
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm install
+npm run dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Abre http://localhost:3000 — te redirige a `/login`. Regístrate en `/register`,
+confirma el correo, entra y entrena.
+
+## Deploy en Vercel
+
+1. Sube el repo a GitHub (raíz del proyecto = carpeta `crids-app`).
+2. En Vercel, importa el repo. Root Directory = `crids-app` si el repo tiene la
+   carpeta anidada.
+3. Añade las tres variables de entorno en **Settings > Environment Variables**.
+   Usa `NEXT_PUBLIC_SITE_URL=https://TU-APP.vercel.app`.
+4. Actualiza las *Redirect URLs* de Supabase con el dominio de Vercel.
+5. Deploy.
+
+## Scripts
+
+- `npm run dev` — servidor de desarrollo
+- `npm run build` — build de producción
+- `npm run lint` — ESLint
+
+## Notas del MVP
+
+- **Solo Grid L1** (búsqueda 00 → 99). Los niveles L2–L7 del protocolo (carga
+  visual, alternancia, número+letra, regla cambiante, distractores, memoria) y las
+  pruebas de transferencia quedan para siguientes iteraciones.
+- Cada grid usa una distribución **aleatoria nueva** para evitar memorizar patrones.
+- Los datos están aislados por usuario mediante **RLS** en Supabase.
+```

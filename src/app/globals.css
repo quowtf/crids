@@ -1,8 +1,38 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Paleta suave: reduce brillo y fatiga visual sin sacrificar legibilidad. */
+  --background: #f4f1ea; /* hueso cálido, no blanco puro */
+  --foreground: #3a3730; /* gris cálido oscuro, no negro puro */
+
+  /* Celdas del grid */
+  --cell-bg: #fbf9f4;
+  --cell-bg-hover: #ece7db;
+  --cell-bg-active: #e2dccb;
+  --cell-border: #ded8ca;
+  --cell-text: #4a463d;
+
+  /* Feedback (tonos apagados, no saturados) */
+  --ok-bg: #7fa87f; /* verde salvia */
+  --wrong-bg: #c98b8b; /* rojo terracota suave */
+  --feedback-text: #fbf9f4;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #16161a; /* gris muy oscuro, no negro puro */
+    --foreground: #d7d3c8; /* texto cálido tenue */
+
+    --cell-bg: #232228;
+    --cell-bg-hover: #2d2c33;
+    --cell-bg-active: #383741;
+    --cell-border: #33323a;
+    --cell-text: #cfcbc0;
+
+    --ok-bg: #5f7d5f;
+    --wrong-bg: #a06f6f;
+    --feedback-text: #f0eee8;
+  }
 }
 
 @theme inline {
@@ -12,15 +42,8 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
