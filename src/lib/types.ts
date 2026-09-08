@@ -18,6 +18,8 @@ export interface SessionContext {
 }
 
 /** Resultado de una sesion de grid, tal como se guarda en Supabase. */
+export type SessionMode = "free" | "protocol" | "baseline" | "transfer";
+
 export interface GridResult extends SessionContext {
   id: string;
   user_id: string;
@@ -29,6 +31,11 @@ export interface GridResult extends SessionContext {
   completed_targets: number | null; // cuantos se acertaron
   ab_variant: FormTiming | null;
   finished_reason: FinishReason | null;
+  session_mode: SessionMode | null;
+  protocol_step: number | null;
+  baseline_test: BaselineTest | null;
+  baseline_attempt: number | null;
+  measurement_index: number | null;
   created_at: string;
 }
 
@@ -42,4 +49,12 @@ export interface NewGridResult extends Partial<SessionContext> {
   completed_targets: number;
   ab_variant: FormTiming;
   finished_reason: FinishReason;
+  session_mode: SessionMode;
+  protocol_step?: number | null;
+  baseline_test?: BaselineTest | null;
+  baseline_attempt?: number | null;
+  measurement_index?: number | null;
 }
+
+/** Pruebas de la línea base (fase 0). */
+export type BaselineTest = "A" | "B" | "C";

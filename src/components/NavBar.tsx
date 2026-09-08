@@ -8,6 +8,15 @@ export default function NavBar({ email }: { email?: string }) {
         <Link href="/train" className="hover:underline">
           Entrenar
         </Link>
+        <Link href="/baseline" className="hover:underline">
+          Línea base
+        </Link>
+        <Link href="/protocol" className="hover:underline">
+          Protocolo
+        </Link>
+        <Link href="/mediciones" className="hover:underline">
+          Mediciones
+        </Link>
         <Link href="/history" className="hover:underline">
           Historial
         </Link>

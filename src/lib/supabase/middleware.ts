@@ -2,7 +2,13 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /** Rutas que requieren sesion iniciada. */
-const PROTECTED_PATHS = ["/train", "/history"];
+const PROTECTED_PATHS = [
+  "/train",
+  "/history",
+  "/protocol",
+  "/baseline",
+  "/mediciones",
+];
 /** Rutas de auth: si ya hay sesion, redirige fuera de ellas. */
 const AUTH_PATHS = ["/login", "/register"];
 

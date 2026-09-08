@@ -13,7 +13,9 @@ export type GameId =
   | "alternating" // 00,99,01,98...
   | "letters" // 00,A,01,B,02,C...
   | "distractors" // 00 -> 99 con distractores visuales
-  | "no-sequence"; // objetivos aislados sin orden logico
+  | "no-sequence" // objetivos aislados sin orden logico
+  | "rule-switch" // asc, señal CAMBIO, luego desc
+  | "memory"; // memorizar N objetivos ocultos, luego buscarlos
 
 export interface GameCell {
   /** Texto mostrado en la celda (ej. "07", "A"). */
@@ -22,10 +24,25 @@ export interface GameCell {
   distractor?: boolean;
 }
 
+/**
+ * Comportamientos especiales que el motor del grid interpreta.
+ * - ruleSwitchAfterMs: tras ese tiempo se muestra "CAMBIO"; la parte de la
+ *   secuencia posterior ya viene calculada (no cambia los objetivos, solo avisa).
+ * - memoryChunk: los objetivos se muestran al principio y luego se ocultan.
+ *   El objetivo actual NO se muestra durante la búsqueda.
+ */
 export interface GameRun {
   cells: GameCell[];
   /** Secuencia de labels objetivo, en orden. */
   sequence: string[];
+  /** Regla cambiante: ms tras los cuales avisar "CAMBIO". */
+  ruleSwitchAfterMs?: number;
+  /** Índice de la secuencia en el que ocurre el cambio (para el aviso). */
+  ruleSwitchAtStep?: number;
+  /** Memoria: tamaño de cada tanda, en orden (carga creciente 2,3,4,5…). */
+  memoryChunks?: number[];
+  /** Memoria: oculta el objetivo actual durante la búsqueda. */
+  hideTarget?: boolean;
 }
 
 export interface GameDef {
@@ -64,6 +81,18 @@ export const GAMES: GameDef[] = [
     id: "no-sequence",
     name: "Sin secuencia",
     description: "Aparece un objetivo aislado; encuéntralo y pasa al siguiente.",
+  },
+  {
+    id: "rule-switch",
+    name: "Regla cambiante",
+    description:
+      "Empiezas ascendente; a mitad aparece CAMBIO y sigues descendente.",
+  },
+  {
+    id: "memory",
+    name: "Memoria",
+    description:
+      "Memoriza tandas cada vez más largas (2→3→4→5); se ocultan y las buscas.",
   },
 ];
 
@@ -175,6 +204,55 @@ function genNoSequence(): GameRun {
   return { cells, sequence };
 }
 
+function genRuleSwitch(): GameRun {
+  // Primera mitad ascendente (00..49), luego CAMBIO y descendente (99..50).
+  const half = 50;
+  const asc = Array.from({ length: half }, (_, i) => pad2(i)); // 00..49
+  const desc = Array.from({ length: half }, (_, i) => pad2(99 - i)); // 99..50
+  const sequence = [...asc, ...desc];
+  return {
+    cells: numberCells(),
+    sequence,
+    ruleSwitchAtStep: half, // el aviso CAMBIO aparece al llegar al paso 50
+  };
+}
+
+// Carga creciente: tandas de 2, 3, 4, 5 (total 14 objetivos).
+// Mide dónde empieza a degradarse tu memoria de trabajo.
+export const MEMORY_CHUNKS = [2, 3, 4, 5];
+
+/**
+ * Dado el índice de objetivo actual y los tamaños de tanda, devuelve el rango
+ * [start, end) de la tanda a la que pertenece ese paso.
+ * Ej. chunks [2,3,4] -> step 0,1 => {0,2}; step 2,3,4 => {2,5}; step 5.. => {5,9}.
+ */
+export function memoryChunkRange(
+  step: number,
+  chunks: number[],
+): { start: number; end: number } {
+  let start = 0;
+  for (const size of chunks) {
+    const end = start + size;
+    if (step < end) return { start, end };
+    start = end;
+  }
+  // Fuera de rango: última tanda.
+  return { start: start - (chunks.at(-1) ?? 0), end: start };
+}
+
+function genMemory(): GameRun {
+  const total = MEMORY_CHUNKS.reduce((a, b) => a + b, 0);
+  const cells = numberCells();
+  const all = cells.map((c) => c.label);
+  const sequence = shuffle([...all]).slice(0, total);
+  return {
+    cells,
+    sequence,
+    memoryChunks: MEMORY_CHUNKS,
+    hideTarget: true,
+  };
+}
+
 export function generateGame(id: GameId): GameRun {
   switch (id) {
     case "L1":
@@ -189,5 +267,9 @@ export function generateGame(id: GameId): GameRun {
       return genDistractors();
     case "no-sequence":
       return genNoSequence();
+    case "rule-switch":
+      return genRuleSwitch();
+    case "memory":
+      return genMemory();
   }
 }

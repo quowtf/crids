@@ -64,6 +64,7 @@ export default function TrainSession() {
       completed_targets: r.completedTargets,
       finished_reason: r.reason,
       ab_variant: variant,
+      session_mode: "free",
       ...contextRef.current,
     });
 

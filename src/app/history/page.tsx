@@ -9,6 +9,8 @@ import {
   FORM_TIMING_LABELS,
   FINISH_REASON_LABELS,
 } from "@/lib/experiment";
+import { statsByVariant } from "@/lib/stats";
+import AbPanel from "@/components/AbPanel";
 
 const GAME_NAMES = new Map(GAMES.map((g) => [g.id, g.name]));
 
@@ -75,6 +77,9 @@ export default async function HistoryPage() {
   // La tabla muestra lo mas reciente primero.
   const rows = [...results].reverse();
 
+  // Agregados del A/B test por variante.
+  const abStats = statsByVariant(results);
+
   return (
     <div className="min-h-dvh">
       <NavBar email={user?.email} />
@@ -98,6 +103,8 @@ export default async function HistoryPage() {
           </h2>
           <HistoryChart data={chartData} />
         </section>
+
+        <AbPanel stats={abStats} />
 
         <section>
           <h2 className="mb-2 text-sm font-medium text-neutral-500">
