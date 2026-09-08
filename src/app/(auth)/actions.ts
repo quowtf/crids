@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { isRegistrationEnabled } from "@/lib/settings";
 
 export interface AuthState {
   error?: string;
@@ -30,6 +31,11 @@ export async function signUp(
   }
   if (password.length < 8) {
     return { error: "La contraseña debe tener al menos 8 caracteres." };
+  }
+
+  // Defensa server-side: respetar el flag aunque se postee directo.
+  if (!(await isRegistrationEnabled())) {
+    return { error: "El registro de nuevas cuentas está cerrado." };
   }
 
   const supabase = await createClient();
